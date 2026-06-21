@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Access Code Generator — Vertical Horizonz (Internal)</title>
+
+<!-- PWA setup -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B1F3A">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Code Gen">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;background:#0B1F3A;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.box{background:#fff;border-radius:14px;padding:36px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+h1{font-size:1.3rem;font-weight:800;color:#0B1F3A;margin-bottom:6px}
+.sub{font-size:13px;color:#6B7280;margin-bottom:28px;line-height:1.5}
+.field{margin-bottom:16px}
+label{display:block;font-size:12.5px;font-weight:600;color:#333;margin-bottom:5px}
+select,input{width:100%;border:1.5px solid #E5E7EB;border-radius:6px;padding:9px 12px;font-size:13.5px;font-family:inherit;outline:none}
+select:focus,input:focus{border-color:#FF6B00}
+.btn{width:100%;background:#FF6B00;color:#fff;border:none;border-radius:6px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px}
+.btn:hover{background:#e05e00}
+.result{display:none;margin-top:24px;padding:20px;background:#F5F6F8;border-radius:8px;text-align:center}
+.result.show{display:block}
+.result .code{font-family:'Courier New',monospace;font-size:1.6rem;font-weight:800;color:#0B1F3A;letter-spacing:.1em;margin:10px 0}
+.result .meta{font-size:12px;color:#6B7280;margin-bottom:4px}
+.copy{background:#0B1F3A;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer;margin-top:10px}
+.copy:hover{background:#001530}
+.copy.copied{background:#16A34A}
+.email-tpl{margin-top:20px;display:none}
+.email-tpl.show{display:block}
+.email-tpl textarea{width:100%;border:1.5px solid #E5E7EB;border-radius:6px;padding:12px;font-size:12.5px;font-family:inherit;min-height:160px;resize:vertical;color:#333}
+.note{font-size:11px;color:#9CA3AF;margin-top:18px;text-align:center;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>🔑 Access Code Generator</h1>
+  <p class="sub">Internal tool — generate a unique access code after verifying a customer's crypto payment, then copy the email template to send them.</p>
+
+  <div class="field">
+    <label for="courseSelect">Course</label>
+    <select id="courseSelect">
+      <option value="OPITO BOSIET with EBS (5700) & CA-EBS (5904)">OPITO BOSIET with EBS &amp; CA-EBS</option>
+      <option value="OPITO FOET with EBS (5858) & CA-EBS (5904)">OPITO FOET with EBS &amp; CA-EBS</option>
+      <option value="OPITO HUET with EBS (5095) & CA-EBS (5295)">OPITO HUET with EBS &amp; CA-EBS</option>
+      <option value="OPITO E-BOSIET — Digital Delivery BOSIET">OPITO E-BOSIET (Digital Delivery)</option>
+      <option value="OPITO CA-EBS Training (ID 5902)">OPITO CA-EBS Training</option>
+      <option value="OPITO T-HUET (5195) including Sea Survival">OPITO T-HUET incl. Sea Survival</option>
+      <option value="OPITO Banksman & Slinger Initial Training (9067)">OPITO Banksman &amp; Slinger</option>
+      <option value="GWO Basic Safety Training (offshore)">GWO Basic Safety Training</option>
+      <option value="STCW Basic Safety Training — Flag State USA">STCW Basic Safety Training</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="custName">Customer Name</label>
+    <input type="text" id="custName" placeholder="e.g. John Smith">
+  </div>
+
+  <div class="field">
+    <label for="custEmail">Customer Email</label>
+    <input type="email" id="custEmail" placeholder="e.g. john@example.com">
+  </div>
+
+  <button class="btn" onclick="generateCode()">Generate Access Code</button>
+
+  <div class="result" id="resultBox">
+    <div class="meta">Access code for <strong id="resCourse"></strong></div>
+    <div class="code" id="resCode">— — — — — —</div>
+    <button class="copy" id="copyCodeBtn" onclick="copyCode()">Copy Code</button>
+  </div>
+
+  <div class="email-tpl" id="emailTpl">
+    <label style="margin-top:18px;display:block">Email Template (copy &amp; send manually)</label>
+    <textarea id="emailText" readonly></textarea>
+    <button class="copy" onclick="copyEmail()" id="copyEmailBtn">Copy Email Text</button>
+  </div>
+
+  <p class="note">This tool runs entirely in your browser. Nothing is saved or sent anywhere — codes are generated locally and you send them yourself via email.</p>
+</div>
+
+<script>
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no O/0/I/1 to avoid confusion
+  let code = '';
+  for (let i = 0; i < 10; i++) {
+    if (i === 4 || i === 7) code += '-';
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  const courseSel = document.getElementById('courseSelect');
+  const courseName = courseSel.options[courseSel.selectedIndex].text;
+  const custName = document.getElementById('custName').value || '[Customer Name]';
+  const custEmail = document.getElementById('custEmail').value || '[customer email]';
+
+  document.getElementById('resCourse').textContent = courseName;
+  document.getElementById('resCode').textContent = code;
+  document.getElementById('resultBox').classList.add('show');
+
+  const emailBody =
+`Hi ${custName},
+
+Thank you for your payment — we've confirmed it and your course is now unlocked!
+
+Course: ${courseName}
+Your Access Code: ${code}
+
+Please keep this code safe. If you have any questions or need help accessing your course materials, just reply to this email or message us on WhatsApp.
+
+Welcome aboard,
+Vertical Horizonz Canada Team`;
+
+  document.getElementById('emailText').value = emailBody;
+  document.getElementById('emailTpl').classList.add('show');
+}
+
+function copyCode() {
+  const code = document.getElementById('resCode').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copyCodeBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Code'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+function copyEmail() {
+  const text = document.getElementById('emailText').value;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyEmailBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Email Text'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
